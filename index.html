@@ -231,28 +231,53 @@ function rejectCoffee(){
 
 /* ---------------- PONG ---------------- */
 let pongRAF, pongRunning=false, pongState;
+
 function resetPong(){
   cancelAnimationFrame(pongRAF);
+
   const area=document.getElementById("pongArea");
-  pongState={px:area.clientHeight/2-45, ax:area.clientHeight/2-45, bx:area.clientWidth/2, by:area.clientHeight/2, vx:4.2, vy:2.4, p:0, a:0};
+
+  pongState={
+    px:area.clientHeight/2-45,
+    ax:area.clientHeight/2-45,
+    bx:area.clientWidth/2,
+    by:area.clientHeight/2,
+    vx:4.2,
+    vy:2.4,
+    p:0,
+    a:0,
+    playerScore:0,
+    aiScore:0,
+    speedLevel:0
+  };
+
   document.getElementById("playerScore").textContent=0;
   document.getElementById("aiScore").textContent=0;
   document.getElementById("pongMessage").textContent="";
   document.getElementById("pongRetry").style.display="none";
+
   pongRunning=true;
   pongLoop();
 }
+
 function movePlayer(y){
   const area=document.getElementById("pongArea");
-  pongState.p=Math.max(0,Math.min(area.clientHeight-90,y-45));
+
+  pongState.p=Math.max(
+    0,
+    Math.min(area.clientHeight-90,y-45)
+  );
+
   document.getElementById("paddlePlayer").style.top=pongState.p+45+"px";
 }
+
 const pongArea=document.getElementById("pongArea");
 
 pongArea.addEventListener("pointerdown",e=>{
   if(!pongRunning)return;
   e.preventDefault();
   pongArea.setPointerCapture(e.pointerId);
+
   const r=pongArea.getBoundingClientRect();
   movePlayer(e.clientY-r.top);
 });
@@ -260,39 +285,163 @@ pongArea.addEventListener("pointerdown",e=>{
 pongArea.addEventListener("pointermove",e=>{
   if(!pongRunning)return;
   e.preventDefault();
+
   const r=pongArea.getBoundingClientRect();
   movePlayer(e.clientY-r.top);
 });
+
 window.addEventListener("keydown",e=>{
   if(!pongRunning)return;
+
   if(e.key==="ArrowUp") movePlayer(pongState.p+5);
   if(e.key==="ArrowDown") movePlayer(pongState.p+85);
 });
+
 function pongLoop(){
   if(!pongRunning)return;
-  const area=document.getElementById("pongArea"), w=area.clientWidth,h=area.clientHeight,s=pongState;
-  s.bx+=s.vx;s.by+=s.vy;
-  if(s.by<=0||s.by>=h-22)s.vy*=-1;
+
+  const area=document.getElementById("pongArea");
+  const w=area.clientWidth;
+  const h=area.clientHeight;
+  const s=pongState;
+
+  s.bx+=s.vx;
+  s.by+=s.vy;
+
+  if(s.by<=0 || s.by>=h-22){
+    s.vy*=-1;
+  }
+
   // IA acompanha a bola
-  const target=s.by-45; s.ax += (target-s.ax)*.075; s.ax=Math.max(0,Math.min(h-90,s.ax));
+  const target=s.by-45;
+
+  // A IA fica mais rápida conforme os pontos aumentam
+  const aiSpeed=0.075+(s.speedLevel*0.025);
+
+  s.ax+=(target-s.ax)*aiSpeed;
+  s.ax=Math.max(0,Math.min(h-90,s.ax));
+
   document.getElementById("paddleAI").style.top=s.ax+45+"px";
-  const pHit=s.bx<=38 && s.bx>=18 && s.by+22>=s.p && s.by<=s.p+90;
-  const aHit=s.bx+22>=w-38 && s.bx<=w-18 && s.by+22>=s.ax && s.by<=s.ax+90;
-  if(pHit){s.bx=39;s.vx=Math.abs(s.vx)*1.035;s.vy += (s.by-(s.p+45))*.025}
-  if(aHit){s.bx=w-40;s.vx=-Math.abs(s.vx)*1.035;s.vy += (s.by-(s.ax+45))*.025}
-  if(s.bx<-25){finishPong(false);return}
-  if(s.bx>w+25){finishPong(true);return}
-  const ball=document.getElementById("ball");ball.style.left=s.bx+"px";ball.style.top=s.by+"px";
+
+  const pHit=
+    s.bx<=38 &&
+    s.bx>=18 &&
+    s.by+22>=s.p &&
+    s.by<=s.p+90;
+
+  const aHit=
+    s.bx+22>=w-38 &&
+    s.bx<=w-18 &&
+    s.by+22>=s.ax &&
+    s.by<=s.ax+90;
+
+  if(pHit){
+    s.bx=39;
+    s.vx=Math.abs(s.vx);
+    s.vy+=(s.by-(s.p+45))*.025;
+  }
+
+  if(aHit){
+    s.bx=w-40;
+    s.vx=-Math.abs(s.vx);
+    s.vy+=(s.by-(s.ax+45))*.025;
+  }
+
+  // Jogador perdeu o ponto
+  if(s.bx<-25){
+    scorePong(false);
+    return;
+  }
+
+  // Jogador marcou o ponto
+  if(s.bx>w+25){
+    scorePong(true);
+    return;
+  }
+
+  const ball=document.getElementById("ball");
+
+  ball.style.left=s.bx+"px";
+  ball.style.top=s.by+"px";
+
   pongRAF=requestAnimationFrame(pongLoop);
 }
+
+function scorePong(playerWon){
+  const s=pongState;
+
+  if(playerWon){
+    s.playerScore++;
+  }else{
+    s.aiScore++;
+  }
+
+  document.getElementById("playerScore").textContent=s.playerScore;
+  document.getElementById("aiScore").textContent=s.aiScore;
+
+  // A cada ponto a velocidade aumenta
+  s.speedLevel++;
+
+  // Aumenta a velocidade da bola
+  const directionX=s.vx>=0?1:-1;
+  const directionY=s.vy>=0?1:-1;
+
+  const newSpeedX=Math.min(
+    Math.abs(s.vx)+0.8,
+    9
+  );
+
+  const newSpeedY=Math.min(
+    Math.abs(s.vy)+0.35,
+    5
+  );
+
+  s.vx=newSpeedX*directionX;
+  s.vy=newSpeedY*directionY;
+
+  // Alguém chegou a 3 pontos
+  if(s.playerScore>=3 || s.aiScore>=3){
+    finishPong(s.playerScore>=3);
+    return;
+  }
+
+  // Reinicia a bola no centro para o próximo ponto
+  const area=document.getElementById("pongArea");
+
+  s.bx=area.clientWidth/2;
+  s.by=area.clientHeight/2;
+
+  // Alterna o lado de saída da bola
+  s.vx=playerWon ? Math.abs(s.vx) : -Math.abs(s.vx);
+
+  document.getElementById("ball").style.left=s.bx+"px";
+  document.getElementById("ball").style.top=s.by+"px";
+
+  // Pequena pausa antes de continuar
+  pongRunning=false;
+
+  setTimeout(()=>{
+    if(pongState===s){
+      pongRunning=true;
+      pongLoop();
+    }
+  },500);
+}
+
 function finishPong(playerWon){
-  pongRunning=false; cancelAnimationFrame(pongRAF);
-  document.getElementById(playerWon?"playerScore":"aiScore").textContent=1;
+  pongRunning=false;
+  cancelAnimationFrame(pongRAF);
+
   const msg=document.getElementById("pongMessage");
+
   if(playerWon){
     msg.textContent="Você ganhou! 🎉 Preparado para o próximo?";
     burst();
-    setTimeout(()=>{show("memory");setupMemory()},1100);
+
+    setTimeout(()=>{
+      show("memory");
+      setupMemory();
+    },1100);
   }else{
     msg.textContent="Você perdeu! 😹 A CPU levou essa.";
     document.getElementById("pongRetry").style.display="inline-block";
