@@ -251,6 +251,7 @@ const pongArea=document.getElementById("pongArea");
 
 pongArea.addEventListener("pointerdown",e=>{
   if(!pongRunning)return;
+  e.preventDefault();
   pongArea.setPointerCapture(e.pointerId);
   const r=pongArea.getBoundingClientRect();
   movePlayer(e.clientY-r.top);
@@ -258,6 +259,7 @@ pongArea.addEventListener("pointerdown",e=>{
 
 pongArea.addEventListener("pointermove",e=>{
   if(!pongRunning)return;
+  e.preventDefault();
   const r=pongArea.getBoundingClientRect();
   movePlayer(e.clientY-r.top);
 });
