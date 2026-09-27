@@ -131,7 +131,6 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 4px #f7dfcd}
     </div>
     <div id="coffeeMsg" class="toast"></div>
   </div>
-</section>
 <section id="pong" class="screen">
   <div class="card fade">
 
@@ -154,44 +153,67 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 4px #f7dfcd}
     </p>
 
     <div id="pongArea" class="game-area">
+
       <div class="center-line"></div>
 
       <div id="paddlePlayer" class="paddle left"></div>
+
       <div id="paddleAI" class="paddle right"></div>
 
       <div id="ball" class="ball"></div>
+
+
+      <!-- TELA DE DERROTA SOBRE O JOGO -->
+
+      <div id="pongLoseOverlay" style="
+        display:none;
+        position:absolute;
+        inset:0;
+        background:rgba(255,255,255,0.94);
+        z-index:20;
+        align-items:center;
+        justify-content:center;
+        flex-direction:column;
+        border-radius:20px;
+      ">
+
+        <img
+          id="pongLoseImg"
+          src="IMG_1825.jpeg"
+          alt="Gato rindo"
+          style="
+            max-width:75%;
+            max-height:65%;
+            object-fit:contain;
+            border-radius:16px;
+            box-shadow:0 10px 25px rgba(0,0,0,.15);
+          "
+        >
+
+        <div style="
+          font-size:22px;
+          font-weight:bold;
+          margin:10px 0;
+        ">
+          Você perdeu! 😹
+        </div>
+
+        <button
+          id="pongRetry"
+          class="btn"
+          onclick="resetPong()"
+        >
+          Tente de novo
+        </button>
+
+      </div>
+
     </div>
 
     <div id="pongMessage" class="toast"></div>
 
-    <div id="pongLoseOverlay" style="
-  display:none;
-  position:absolute;
-  inset:0;
-  background:rgba(255,255,255,0.92);
-  z-index:20;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  border-radius:16px;
-">
-  <img
-    id="pongLoseImg"
-    src="IMG_1825.jpeg"
-    alt="Gato rindo"
-    style="
-      max-width:75%;
-      max-height:75%;
-      object-fit:contain;
-      border-radius:16px;
-    "
-  >
-
-  <div style="
-    font-size:22px;
-    font-weight:bold;
-    margin-top:10px;
-  ">
+  </div>
+</section>
     Você perdeu! 😹
   </div>
 </div>
@@ -286,286 +308,460 @@ function rejectCoffee(){
 }
 
 /* ---------------- PONG ---------------- */
-let pongRAF, pongRunning=false, pongState;
+
+let pongRAF;
+let pongRunning = false;
+let pongState;
+
+
+/* ---------------- INICIAR / REINICIAR ---------------- */
 
 function resetPong(){
+
   cancelAnimationFrame(pongRAF);
 
-  const area=document.getElementById("pongArea");
+  const area = document.getElementById("pongArea");
 
-  // Esconde a tela de derrota ao começar uma nova partida
-  document.getElementById("pongLoseImg").style.display="none";
-  document.getElementById("pongRetry").style.display="none";
+  // Esconde a tela de derrota
+  document.getElementById("pongLoseOverlay").style.display = "none";
 
-  pongState={
-    px:area.clientHeight/2-45,
-    ax:area.clientHeight/2-45,
-    bx:area.clientWidth/2,
-    by:area.clientHeight/2,
+  pongState = {
 
-    vx:4.2,
-    vy:2.4,
+    px: area.clientHeight / 2 - 45,
 
-    p:0,
-    a:0,
+    ax: area.clientHeight / 2 - 45,
 
-    playerScore:0,
-    aiScore:0,
+    bx: area.clientWidth / 2,
 
-    speedLevel:0
+    by: area.clientHeight / 2,
+
+    vx: 4.2,
+
+    vy: 2.4,
+
+    playerScore: 0,
+
+    aiScore: 0,
+
+    speedLevel: 0
+
   };
 
-  document.getElementById("playerScore").textContent=0;
-  document.getElementById("aiScore").textContent=0;
-  document.getElementById("pongMessage").textContent="";
+  document.getElementById("playerScore").textContent = "0";
 
-  pongRunning=true;
+  document.getElementById("aiScore").textContent = "0";
+
+  document.getElementById("pongMessage").textContent = "";
+
+  document.getElementById("paddlePlayer").style.top =
+    pongState.px + 45 + "px";
+
+  document.getElementById("paddleAI").style.top =
+    pongState.ax + 45 + "px";
+
+  document.getElementById("ball").style.left =
+    pongState.bx + "px";
+
+  document.getElementById("ball").style.top =
+    pongState.by + "px";
+
+  pongRunning = true;
+
   pongLoop();
 }
 
-function movePlayer(y){
-  const area=document.getElementById("pongArea");
 
-  pongState.p=Math.max(
+/* ---------------- CONTROLE DO JOGADOR ---------------- */
+
+function movePlayer(y){
+
+  const area = document.getElementById("pongArea");
+
+  pongState.p = Math.max(
     0,
-    Math.min(area.clientHeight-90,y-45)
+    Math.min(
+      area.clientHeight - 90,
+      y - 45
+    )
   );
 
-  document.getElementById("paddlePlayer").style.top=
-    pongState.p+45+"px";
+  document.getElementById("paddlePlayer").style.top =
+    pongState.p + 45 + "px";
 }
 
-const pongArea=document.getElementById("pongArea");
 
-pongArea.addEventListener("pointerdown",e=>{
-  if(!pongRunning)return;
+/* ---------------- CONTROLE POR MOUSE / DEDO ---------------- */
+
+const pongArea = document.getElementById("pongArea");
+
+
+pongArea.addEventListener("pointerdown", e => {
+
+  if(!pongRunning) return;
 
   e.preventDefault();
 
   pongArea.setPointerCapture(e.pointerId);
 
-  const r=pongArea.getBoundingClientRect();
+  const r = pongArea.getBoundingClientRect();
 
-  movePlayer(e.clientY-r.top);
+  movePlayer(e.clientY - r.top);
+
 });
 
-pongArea.addEventListener("pointermove",e=>{
-  if(!pongRunning)return;
+
+pongArea.addEventListener("pointermove", e => {
+
+  if(!pongRunning) return;
 
   e.preventDefault();
 
-  const r=pongArea.getBoundingClientRect();
+  const r = pongArea.getBoundingClientRect();
 
-  movePlayer(e.clientY-r.top);
+  movePlayer(e.clientY - r.top);
+
 });
 
-window.addEventListener("keydown",e=>{
-  if(!pongRunning)return;
 
-  if(e.key==="ArrowUp"){
-    movePlayer(pongState.p+5);
+/* ---------------- CONTROLE PELAS SETAS ---------------- */
+
+window.addEventListener("keydown", e => {
+
+  if(!pongRunning) return;
+
+  if(e.key === "ArrowUp"){
+
+    movePlayer(pongState.p + 5);
+
   }
 
-  if(e.key==="ArrowDown"){
-    movePlayer(pongState.p+85);
+  if(e.key === "ArrowDown"){
+
+    movePlayer(pongState.p + 85);
+
   }
+
 });
+
+
+/* ---------------- LOOP DO PONG ---------------- */
 
 function pongLoop(){
-  if(!pongRunning)return;
 
-  const area=document.getElementById("pongArea");
+  if(!pongRunning) return;
 
-  const w=area.clientWidth;
-  const h=area.clientHeight;
+  const area = document.getElementById("pongArea");
 
-  const s=pongState;
+  const w = area.clientWidth;
 
-  // Movimento da bola
-  s.bx+=s.vx;
-  s.by+=s.vy;
+  const h = area.clientHeight;
 
-  // Rebater nas paredes
-  if(s.by<=0 || s.by>=h-22){
-    s.vy*=-1;
+  const s = pongState;
+
+
+  /* Movimento da bola */
+
+  s.bx += s.vx;
+
+  s.by += s.vy;
+
+
+  /* Rebater nas paredes */
+
+  if(
+    s.by <= 0 ||
+    s.by >= h - 22
+  ){
+
+    s.vy *= -1;
+
   }
 
-  // IA acompanha a bola
-  const target=s.by-45;
 
-  // IA fica mais rápida a cada ponto
-  const aiSpeed=0.075+(s.speedLevel*0.025);
+  /* ---------------- IA ---------------- */
 
-  s.ax+=(target-s.ax)*aiSpeed;
+  const target = s.by - 45;
 
-  s.ax=Math.max(
+  const aiSpeed =
+    0.075 + (s.speedLevel * 0.025);
+
+  s.ax +=
+    (target - s.ax) * aiSpeed;
+
+  s.ax = Math.max(
     0,
-    Math.min(h-90,s.ax)
+    Math.min(
+      h - 90,
+      s.ax
+    )
   );
 
-  document.getElementById("paddleAI").style.top=
-    s.ax+45+"px";
+  document.getElementById("paddleAI").style.top =
+    s.ax + 45 + "px";
 
-  // Colisão com o jogador
-  const pHit=
-    s.bx<=38 &&
-    s.bx>=18 &&
-    s.by+22>=s.p &&
-    s.by<=s.p+90;
 
-  // Colisão com a IA
-  const aHit=
-    s.bx+22>=w-38 &&
-    s.bx<=w-18 &&
-    s.by+22>=s.ax &&
-    s.by<=s.ax+90;
+  /* ---------------- COLISÃO JOGADOR ---------------- */
+
+  const pHit =
+    s.bx <= 38 &&
+    s.bx >= 18 &&
+    s.by + 22 >= s.p &&
+    s.by <= s.p + 90;
+
+
+  /* ---------------- COLISÃO IA ---------------- */
+
+  const aHit =
+    s.bx + 22 >= w - 38 &&
+    s.bx <= w - 18 &&
+    s.by + 22 >= s.ax &&
+    s.by <= s.ax + 90;
+
+
+  /* Jogador rebate */
 
   if(pHit){
-    s.bx=39;
 
-    s.vx=Math.abs(s.vx);
+    s.bx = 39;
 
-    s.vy+=(s.by-(s.p+45))*0.025;
+    s.vx = Math.abs(s.vx);
+
+    s.vy +=
+      (s.by - (s.p + 45)) * 0.025;
+
   }
+
+
+  /* IA rebate */
 
   if(aHit){
-    s.bx=w-40;
 
-    s.vx=-Math.abs(s.vx);
+    s.bx = w - 40;
 
-    s.vy+=(s.by-(s.ax+45))*0.025;
+    s.vx = -Math.abs(s.vx);
+
+    s.vy +=
+      (s.by - (s.ax + 45)) * 0.025;
+
   }
 
-  // Jogador perdeu o ponto
-  if(s.bx<-25){
+
+  /* ---------------- PONTO DA IA ---------------- */
+
+  if(s.bx < -25){
+
     scorePong(false);
+
     return;
+
   }
 
-  // Jogador marcou o ponto
-  if(s.bx>w+25){
+
+  /* ---------------- PONTO DO JOGADOR ---------------- */
+
+  if(s.bx > w + 25){
+
     scorePong(true);
+
     return;
+
   }
 
-  // Atualiza posição da bola
-  const ball=document.getElementById("ball");
 
-  ball.style.left=s.bx+"px";
-  ball.style.top=s.by+"px";
+  /* ---------------- ATUALIZA BOLA ---------------- */
 
-  pongRAF=requestAnimationFrame(pongLoop);
+  const ball =
+    document.getElementById("ball");
+
+  ball.style.left =
+    s.bx + "px";
+
+  ball.style.top =
+    s.by + "px";
+
+
+  pongRAF =
+    requestAnimationFrame(pongLoop);
+
 }
 
+
+/* ---------------- MARCAR PONTO ---------------- */
+
 function scorePong(playerWon){
-  const s=pongState;
+
+  const s = pongState;
+
 
   if(playerWon){
+
     s.playerScore++;
+
   }else{
+
     s.aiScore++;
+
   }
 
-  // Atualiza placar
-  document.getElementById("playerScore").textContent=
+
+  /* Atualiza placar */
+
+  document.getElementById("playerScore").textContent =
     s.playerScore;
 
-  document.getElementById("aiScore").textContent=
+  document.getElementById("aiScore").textContent =
     s.aiScore;
 
-  // Cada ponto aumenta a dificuldade
+
+  /* Aumenta dificuldade */
+
   s.speedLevel++;
 
-  // Aumenta velocidade da bola
-  const directionX=s.vx>=0 ? 1 : -1;
-  const directionY=s.vy>=0 ? 1 : -1;
 
-  const newSpeedX=Math.min(
-    Math.abs(s.vx)+0.8,
-    9
-  );
+  /* Aumenta velocidade da bola */
 
-  const newSpeedY=Math.min(
-    Math.abs(s.vy)+0.35,
-    5
-  );
+  const directionX =
+    s.vx >= 0 ? 1 : -1;
 
-  s.vx=newSpeedX*directionX;
-  s.vy=newSpeedY*directionY;
+  const directionY =
+    s.vy >= 0 ? 1 : -1;
 
-  // Primeiro a 3 pontos vence
+
+  const newSpeedX =
+    Math.min(
+      Math.abs(s.vx) + 0.8,
+      9
+    );
+
+
+  const newSpeedY =
+    Math.min(
+      Math.abs(s.vy) + 0.35,
+      5
+    );
+
+
+  s.vx =
+    newSpeedX * directionX;
+
+  s.vy =
+    newSpeedY * directionY;
+
+
+  /* Primeiro a 3 pontos vence */
+
   if(
-    s.playerScore>=3 ||
-    s.aiScore>=3
+    s.playerScore >= 3 ||
+    s.aiScore >= 3
   ){
-    finishPong(s.playerScore>=3);
+
+    finishPong(
+      s.playerScore >= 3
+    );
+
     return;
+
   }
 
-  // Volta a bola para o centro
-  const area=document.getElementById("pongArea");
 
-  s.bx=area.clientWidth/2;
-  s.by=area.clientHeight/2;
+  /* Reposiciona a bola */
 
-  // Define o lado para onde a bola vai sair
-  s.vx=playerWon
+  const area =
+    document.getElementById("pongArea");
+
+  s.bx =
+    area.clientWidth / 2;
+
+  s.by =
+    area.clientHeight / 2;
+
+
+  /* Define direção da bola */
+
+  s.vx = playerWon
     ? Math.abs(s.vx)
     : -Math.abs(s.vx);
 
-  document.getElementById("ball").style.left=
-    s.bx+"px";
 
-  document.getElementById("ball").style.top=
-    s.by+"px";
+  document.getElementById("ball").style.left =
+    s.bx + "px";
 
-  // Pequena pausa entre os pontos
-  pongRunning=false;
+  document.getElementById("ball").style.top =
+    s.by + "px";
 
-  setTimeout(()=>{
-    if(pongState===s){
-      pongRunning=true;
+
+  /* Pequena pausa */
+
+  pongRunning = false;
+
+
+  setTimeout(() => {
+
+    if(pongState === s){
+
+      pongRunning = true;
+
       pongLoop();
+
     }
-  },500);
+
+  }, 500);
+
 }
 
+
+/* ---------------- FINAL DO PONG ---------------- */
+
 function finishPong(playerWon){
-  pongRunning=false;
+
+  pongRunning = false;
 
   cancelAnimationFrame(pongRAF);
 
-  const msg=document.getElementById("pongMessage");
 
-  const loseImg=document.getElementById("pongLoseImg");
+  const msg =
+    document.getElementById("pongMessage");
+
 
   if(playerWon){
 
-    // Vitória
-    loseImg.style.display="none";
+    /* ---------------- VITÓRIA ---------------- */
 
-    msg.textContent=
+    msg.textContent =
       "Você ganhou! 🎉 Preparado para o próximo?";
+
 
     burst();
 
-    setTimeout(()=>{
+
+    setTimeout(() => {
+
       show("memory");
+
       setupMemory();
-    },1100);
+
+    }, 1100);
+
 
   }else{
 
-    // Derrota
-    msg.textContent="Você perdeu 😂";
+    /* ---------------- DERROTA ---------------- */
 
-    // Mostra o gato rindo
-    loseImg.style.display="block";
+    msg.textContent =
+      "Você perdeu 😂";
 
-    // Mostra botão para tentar novamente
-    document.getElementById("pongRetry").style.display=
-      "inline-block";
+
+    /*
+      Mostra o gato SOBRE o jogo.
+      O botão de tentar novamente
+      também fica dentro dessa tela.
+    */
+
+    document.getElementById("pongLoseOverlay").style.display =
+      "flex";
+
   }
+
 }
 
       
