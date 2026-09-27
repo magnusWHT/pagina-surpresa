@@ -230,223 +230,58 @@ function rejectCoffee(){
 }
 
 /* ---------------- PONG ---------------- */
-let pongRAF, pongRunning=false, pongState;
+<section id="pong" class="screen">
+  <div class="card fade">
 
-function resetPong(){
-  cancelAnimationFrame(pongRAF);
+    <div class="game-top">
+      <div>
+        <span class="paw">🏓</span>
+        <h2>Pong</h2>
+      </div>
 
-  const area=document.getElementById("pongArea");
+      <div class="score">
+        Você <span id="playerScore">0</span>
+        ×
+        <span id="aiScore">0</span> CPU
+      </div>
+    </div>
 
-  pongState={
-    px:area.clientHeight/2-45,
-    ax:area.clientHeight/2-45,
-    bx:area.clientWidth/2,
-    by:area.clientHeight/2,
-    vx:4.2,
-    vy:2.4,
-    p:0,
-    a:0,
-    playerScore:0,
-    aiScore:0,
-    speedLevel:0
-  };
+    <p>
+      Use o mouse, o dedo ou as setas <b>↑ ↓</b>.
+      Quem fizer 3 pontos primeiro vence!
+    </p>
 
-  document.getElementById("playerScore").textContent=0;
-  document.getElementById("aiScore").textContent=0;
-  document.getElementById("pongMessage").textContent="";
-  document.getElementById("pongRetry").style.display="none";
+    <div id="pongArea" class="game-area">
+      <div class="center-line"></div>
 
-  pongRunning=true;
-  pongLoop();
-}
+      <div id="paddlePlayer" class="paddle left"></div>
+      <div id="paddleAI" class="paddle right"></div>
 
-function movePlayer(y){
-  const area=document.getElementById("pongArea");
+      <div id="ball" class="ball"></div>
+    </div>
 
-  pongState.p=Math.max(
-    0,
-    Math.min(area.clientHeight-90,y-45)
-  );
+    <div id="pongMessage" class="toast"></div>
 
-  document.getElementById("paddlePlayer").style.top=pongState.p+45+"px";
-}
+    <img
+      id="pongLoseImg"
+      class="hero-img"
+      src="IMG_1825.jpeg"
+      alt="Gato rindo"
+      style="display:none; margin:18px auto;"
+    >
 
-const pongArea=document.getElementById("pongArea");
+    <button
+      id="pongRetry"
+      class="btn"
+      style="display:none"
+      onclick="resetPong()"
+    >
+      Tente de novo
+    </button>
 
-pongArea.addEventListener("pointerdown",e=>{
-  if(!pongRunning)return;
-  e.preventDefault();
-  pongArea.setPointerCapture(e.pointerId);
-
-  const r=pongArea.getBoundingClientRect();
-  movePlayer(e.clientY-r.top);
-});
-
-pongArea.addEventListener("pointermove",e=>{
-  if(!pongRunning)return;
-  e.preventDefault();
-
-  const r=pongArea.getBoundingClientRect();
-  movePlayer(e.clientY-r.top);
-});
-
-window.addEventListener("keydown",e=>{
-  if(!pongRunning)return;
-
-  if(e.key==="ArrowUp") movePlayer(pongState.p+5);
-  if(e.key==="ArrowDown") movePlayer(pongState.p+85);
-});
-
-function pongLoop(){
-  if(!pongRunning)return;
-
-  const area=document.getElementById("pongArea");
-  const w=area.clientWidth;
-  const h=area.clientHeight;
-  const s=pongState;
-
-  s.bx+=s.vx;
-  s.by+=s.vy;
-
-  if(s.by<=0 || s.by>=h-22){
-    s.vy*=-1;
-  }
-
-  // IA acompanha a bola
-  const target=s.by-45;
-
-  // A IA fica mais rápida conforme os pontos aumentam
-  const aiSpeed=0.075+(s.speedLevel*0.025);
-
-  s.ax+=(target-s.ax)*aiSpeed;
-  s.ax=Math.max(0,Math.min(h-90,s.ax));
-
-  document.getElementById("paddleAI").style.top=s.ax+45+"px";
-
-  const pHit=
-    s.bx<=38 &&
-    s.bx>=18 &&
-    s.by+22>=s.p &&
-    s.by<=s.p+90;
-
-  const aHit=
-    s.bx+22>=w-38 &&
-    s.bx<=w-18 &&
-    s.by+22>=s.ax &&
-    s.by<=s.ax+90;
-
-  if(pHit){
-    s.bx=39;
-    s.vx=Math.abs(s.vx);
-    s.vy+=(s.by-(s.p+45))*.025;
-  }
-
-  if(aHit){
-    s.bx=w-40;
-    s.vx=-Math.abs(s.vx);
-    s.vy+=(s.by-(s.ax+45))*.025;
-  }
-
-  // Jogador perdeu o ponto
-  if(s.bx<-25){
-    scorePong(false);
-    return;
-  }
-
-  // Jogador marcou o ponto
-  if(s.bx>w+25){
-    scorePong(true);
-    return;
-  }
-
-  const ball=document.getElementById("ball");
-
-  ball.style.left=s.bx+"px";
-  ball.style.top=s.by+"px";
-
-  pongRAF=requestAnimationFrame(pongLoop);
-}
-
-function scorePong(playerWon){
-  const s=pongState;
-
-  if(playerWon){
-    s.playerScore++;
-  }else{
-    s.aiScore++;
-  }
-
-  document.getElementById("playerScore").textContent=s.playerScore;
-  document.getElementById("aiScore").textContent=s.aiScore;
-
-  // A cada ponto a velocidade aumenta
-  s.speedLevel++;
-
-  // Aumenta a velocidade da bola
-  const directionX=s.vx>=0?1:-1;
-  const directionY=s.vy>=0?1:-1;
-
-  const newSpeedX=Math.min(
-    Math.abs(s.vx)+0.8,
-    9
-  );
-
-  const newSpeedY=Math.min(
-    Math.abs(s.vy)+0.35,
-    5
-  );
-
-  s.vx=newSpeedX*directionX;
-  s.vy=newSpeedY*directionY;
-
-  // Alguém chegou a 3 pontos
-  if(s.playerScore>=3 || s.aiScore>=3){
-    finishPong(s.playerScore>=3);
-    return;
-  }
-
-  // Reinicia a bola no centro para o próximo ponto
-  const area=document.getElementById("pongArea");
-
-  s.bx=area.clientWidth/2;
-  s.by=area.clientHeight/2;
-
-  // Alterna o lado de saída da bola
-  s.vx=playerWon ? Math.abs(s.vx) : -Math.abs(s.vx);
-
-  document.getElementById("ball").style.left=s.bx+"px";
-  document.getElementById("ball").style.top=s.by+"px";
-
-  // Pequena pausa antes de continuar
-  pongRunning=false;
-
-  setTimeout(()=>{
-    if(pongState===s){
-      pongRunning=true;
-      pongLoop();
-    }
-  },500);
-}
-
-function finishPong(playerWon){
-  pongRunning=false;
-  cancelAnimationFrame(pongRAF);
-
-  const msg=document.getElementById("pongMessage");
-
-  if(playerWon){
-    msg.textContent="Você ganhou! 🎉 Preparado para o próximo?";
-    burst();
-
-    setTimeout(()=>{
-      show("memory");
-      setupMemory();
-    },1100);
-  }else{
-    msg.textContent="Você perdeu! 😹 A CPU levou essa.";
-    document.getElementById("pongRetry").style.display="inline-block";
-  }
-}
+  </div>
+</section>
+      
 
 /* ---------------- MEMÓRIA ---------------- */
 let memory={first:null,lock:false,pairs:0};
