@@ -164,13 +164,37 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 4px #f7dfcd}
 
     <div id="pongMessage" class="toast"></div>
 
-    <img
-      id="pongLoseImg"
-      class="hero-img"
-      src="IMG_1825.jpeg"
-      alt="Gato rindo"
-      style="display:none; margin:18px auto;"
-    >
+    <div id="pongLoseOverlay" style="
+  display:none;
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,0.92);
+  z-index:20;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  border-radius:16px;
+">
+  <img
+    id="pongLoseImg"
+    src="IMG_1825.jpeg"
+    alt="Gato rindo"
+    style="
+      max-width:75%;
+      max-height:75%;
+      object-fit:contain;
+      border-radius:16px;
+    "
+  >
+
+  <div style="
+    font-size:22px;
+    font-weight:bold;
+    margin-top:10px;
+  ">
+    Você perdeu! 😹
+  </div>
+</div>
 
     <button
       id="pongRetry"
