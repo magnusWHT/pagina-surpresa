@@ -208,9 +208,18 @@ document.getElementById("nameInput").addEventListener("keydown",e=>{if(e.key==="
 
 function acceptCoffee(){
   const cup=document.getElementById("cup");
-  cup.classList.remove("fly"); void cup.offsetWidth; cup.classList.add("fly");
+  cup.classList.remove("fly");
+  void cup.offsetWidth;
+  cup.classList.add("fly");
+
   document.getElementById("coffeeMsg").textContent="Boa escolha! ☕";
-  setTimeout(()=>{show("pong"); resetPong();},1750);
+
+  setTimeout(()=>{
+    cup.classList.remove("fly");
+    cup.style.opacity="0";
+    show("pong");
+    resetPong();
+  },1750);
 }
 function rejectCoffee(){
   document.getElementById("coffeeMsg").textContent="Você magoou o gatinho 😿💔";
