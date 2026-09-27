@@ -66,7 +66,7 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 4px #f7dfcd}
 .paw{font-size:2.5rem;margin-bottom:8px}
 .game-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
 .game-top .score{font-weight:900;background:#fff2e7;padding:9px 14px;border-radius:999px}
-.game-area{position:relative;width:min(760px,92vw);height:min(62vh,480px);min-height:330px;margin:auto;border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#dff1e9,#edf8f3);border:4px solid #c7e1d7;box-shadow:inset 0 0 40px rgba(255,255,255,.65)}
+.game-area{position:relative;width:min(760px,92vw);height:min(62vh,480px);min-height:330px;margin:auto;border-radius:24px;overflow:hidden;background:linear-gradient(135deg,#dff1e9,#edf8f3);border:4px solid #c7e1d7;box-shadow:inset 0 0 40px rgba(255,255,255,.65);touch-action:none}
 .paddle{position:absolute;width:16px;height:90px;border-radius:10px;background:#5d8e80;top:50%;transform:translateY(-50%);box-shadow:0 5px 12px rgba(60,90,80,.18)}
 .paddle.left{left:18px}.paddle.right{right:18px}
 .ball{position:absolute;width:22px;height:22px;border-radius:50%;background:#d88d58;box-shadow:0 5px 10px rgba(100,60,35,.2)}
@@ -247,9 +247,19 @@ function movePlayer(y){
   pongState.p=Math.max(0,Math.min(area.clientHeight-90,y-45));
   document.getElementById("paddlePlayer").style.top=pongState.p+45+"px";
 }
-document.getElementById("pongArea").addEventListener("pointermove",e=>{
+const pongArea=document.getElementById("pongArea");
+
+pongArea.addEventListener("pointerdown",e=>{
   if(!pongRunning)return;
-  const r=e.currentTarget.getBoundingClientRect(); movePlayer(e.clientY-r.top);
+  pongArea.setPointerCapture(e.pointerId);
+  const r=pongArea.getBoundingClientRect();
+  movePlayer(e.clientY-r.top);
+});
+
+pongArea.addEventListener("pointermove",e=>{
+  if(!pongRunning)return;
+  const r=pongArea.getBoundingClientRect();
+  movePlayer(e.clientY-r.top);
 });
 window.addEventListener("keydown",e=>{
   if(!pongRunning)return;
